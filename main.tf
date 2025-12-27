@@ -20,7 +20,7 @@ resource "yandex_compute_instance" "server1" {
   }
 
   metadata = {
-    ssh-keys = "test:${file("../pubkey.txt")}"
+    ssh-keys = "test:${file("pubkey.txt")}"
     user-data = <<EOT
 #cloud-config
 users:
@@ -31,7 +31,7 @@ users:
     shell: /bin/bash
     lock_passwd: false
     ssh_authorized_keys:
-      - ${file("../pubkey.txt")}
+      - ${file("pubkey.txt")}
 
 bootcmd:
   - mkdir -p /home/test/app
