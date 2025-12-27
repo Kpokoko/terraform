@@ -1,0 +1,6 @@
+cloud_id            = "b1gb8c57bkt79uc8riib"
+folder_id           = "b1g198030ofc482vr85d"
+server_iso_id       = "fd883qojk2a3hruf8p7m"
+git_url             = "https://github.com/Kpokoko/react-mock-server"
+db_user              = "myuser"
+db_password          = "12345"
