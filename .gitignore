@@ -1,4 +1,2 @@
-authorized_key.json
 .terraform
 .terraform.lock.hcl
-pubkey.txt
