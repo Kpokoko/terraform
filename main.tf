@@ -77,23 +77,34 @@ resource "yandex_compute_instance_group" "servers_pool" {
         . venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
+        cat > /etc/nginx/sites-available/app <<EOL
+server {
+    listen 443 ssl;
+    server_name _;
+
+    ssl_certificate     /home/test/certs/server.crt;
+    ssl_certificate_key /home/test/certs/server.key;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+EOL
+        ln -sf /etc/nginx/sites-available/app /etc/nginx/sites-enabled/app
+        rm -f /etc/nginx/sites-enabled/default
+        systemctl restart nginx
         nohup uvicorn app.app:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
-
-    - path: /home/test/certs/server.certs
-      owner: test:test
-      permissions: '0644'
-      source: "server.crt"
-
-    - path: /home/test/certs/server.key
-      owner: test:test
-      permissions: '0600'
-      source: "server.key"
 
   runcmd:
     - apt update
-    - apt install -y python3.12-venv python3-pip git
+    - apt install -y python3.12-venv python3-pip git nginx
     - git clone "${var.git_url}" /home/test/back
     - chown -R test:test /home/test
+    - curl -o /home/test/certs/server.crt https://storage.yandexcloud.net/dungeon-certs/server.crt
+    - curl -o /home/test/certs/server.key https://storage.yandexcloud.net/dungeon-certs/server.key
     - [chmod, -R, u+rwX, /home/test/back]
     - /home/test/start_back.sh
   EOT
@@ -115,7 +126,12 @@ resource "yandex_vpc_security_group" "vm_sg" {
   ingress {
     protocol       = "TCP"
     port           = 443
-    # только от ALB или всех, если тест
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol       = "TCP"
+    port           = 22
     v4_cidr_blocks = ["0.0.0.0/0"]
   }
 
