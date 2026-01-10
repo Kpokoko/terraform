@@ -77,22 +77,6 @@ resource "yandex_compute_instance_group" "servers_pool" {
         . venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
-        cat > /etc/nginx/sites-available/app <<EOL
-server {
-    listen 443 ssl;
-    server_name _;
-
-    ssl_certificate     /home/test/certs/server.crt;
-    ssl_certificate_key /home/test/certs/server.key;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-}
-EOL
         ln -sf /etc/nginx/sites-available/app /etc/nginx/sites-enabled/app
         rm -f /etc/nginx/sites-enabled/default
         systemctl restart nginx
@@ -105,6 +89,7 @@ EOL
     - chown -R test:test /home/test
     - curl -o /home/test/certs/server.crt https://storage.yandexcloud.net/dungeon-certs/server.crt
     - curl -o /home/test/certs/server.key https://storage.yandexcloud.net/dungeon-certs/server.key
+    - curl -o /etc/nginx/sites-available/app https://storage.yandexcloud.net/dungeon-certs/nginx.conf
     - [chmod, -R, u+rwX, /home/test/back]
     - /home/test/start_back.sh
   EOT
@@ -132,6 +117,11 @@ resource "yandex_vpc_security_group" "vm_sg" {
   ingress {
     protocol       = "TCP"
     port           = 22
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol       = "ANY"
     v4_cidr_blocks = ["0.0.0.0/0"]
   }
 
