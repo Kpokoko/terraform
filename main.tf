@@ -8,13 +8,13 @@ resource "yandex_compute_instance_group" "servers_pool" {
 
   scale_policy {
     fixed_scale {
-      size = 3
+      size = 1
     }
   }
 
   deploy_policy {
-    max_creating     = 3
-    max_unavailable  = 3
+    max_creating     = 1
+    max_unavailable  = 1
     max_expansion    = 0
   }
 
@@ -80,7 +80,7 @@ resource "yandex_compute_instance_group" "servers_pool" {
         ln -sf /etc/nginx/sites-available/app /etc/nginx/sites-enabled/app
         rm -f /etc/nginx/sites-enabled/default
         systemctl restart nginx
-        nohup uvicorn app.app:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
+        nohup uvicorn app.app:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*" > uvicorn.log 2>&1 &
 
   runcmd:
     - apt update
