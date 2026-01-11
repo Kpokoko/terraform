@@ -62,6 +62,7 @@ resource "yandex_compute_instance_group" "servers_pool" {
   bootcmd:
     - mkdir -p /home/test/back
     - mkdir -p /home/test/certs
+    - mkdir -p /home/test/key
 
   write_files:
     - path: /home/test/start_back.sh
@@ -70,6 +71,8 @@ resource "yandex_compute_instance_group" "servers_pool" {
       defer: true
       content: |
         #!/bin/bash
+        export S3_ACCESS_KEY=$(cat /home/test/key/id)
+        export S3_SECRET_KEY=$(cat /home/test/key/secret)
         cd /home/test/back
         if [ ! -d venv ]; then
           python3 -m venv venv
@@ -81,6 +84,20 @@ resource "yandex_compute_instance_group" "servers_pool" {
         rm -f /etc/nginx/sites-enabled/default
         systemctl restart nginx
         nohup uvicorn app.app:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*" > uvicorn.log 2>&1 &
+
+    - path: /home/test/key/id
+      owner: test:test
+      permissions: '0600'
+      defer: true
+      content: |
+        ${file("key.txt")}
+
+    - path: /home/test/key/secret
+      owner: test:test
+      permissions: '0600'
+      defer: true
+      content: |
+        ${file("secret_key.txt")}
 
   runcmd:
     - apt update

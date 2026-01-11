@@ -1,3 +1,6 @@
 .terraform
 .terraform.lock.hcl
 authorized_key.json
+static_key.json
+key.txt
+secret_key.txt
